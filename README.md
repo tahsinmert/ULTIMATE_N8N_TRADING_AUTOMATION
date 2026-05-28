@@ -2,6 +2,10 @@
 
 An n8n workflow export for automated trading signals and execution. The workflow listens for incoming market data, evaluates trend and momentum conditions, validates the trade, executes an order through Binance Futures, and sends a Telegram alert when a trade is placed.
 
+## Overview
+
+![Automation overview](image.png)
+
 ## What’s Inside
 
 - `TradingView Webhook` receives webhook payloads
