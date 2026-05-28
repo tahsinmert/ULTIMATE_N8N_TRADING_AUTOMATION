@@ -1,0 +1,111 @@
+{
+  "name": "ULTIMATE_N8N_TRADING_AUTOMATION",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "trading-webhook",
+        "responseMode": "onReceived"
+      },
+      "name": "TradingView Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const data = items[0].json;\n\nconst close = Number(data.close);\nconst ema50 = Number(data.ema50);\nconst ema200 = Number(data.ema200);\nconst rsi = Number(data.rsi);\nconst macd = Number(data.macd);\nconst signal = Number(data.signal);\nconst volume = Number(data.volume);\nconst avgVolume = Number(data.avgVolume);\nconst atr = Number(data.atr);\n\nlet trend = 'neutral';\nlet action = 'NONE';\n\nconst bullishTrend = ema50 > ema200;\nconst bearishTrend = ema50 < ema200;\n\nconst macdBullish = macd > signal;\nconst macdBearish = macd < signal;\n\nconst strongVolume = volume > avgVolume * 1.3;\n\nconst acceptableATR = atr > 0.5;\n\nif (\n  bullishTrend &&\n  rsi > 55 &&\n  rsi < 72 &&\n  macdBullish &&\n  strongVolume &&\n  acceptableATR\n) {\n  trend = 'bullish';\n  action = 'LONG';\n}\n\nif (\n  bearishTrend &&\n  rsi > 28 &&\n  rsi < 45 &&\n  macdBearish &&\n  strongVolume &&\n  acceptableATR\n) {\n  trend = 'bearish';\n  action = 'SHORT';\n}\n\nreturn [{\n  json: {\n    symbol: data.symbol,\n    close,\n    trend,\n    action,\n    rsi,\n    atr,\n    volume\n  }\n}];"
+      },
+      "name": "Logic Engine",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"action\"]}}",
+              "operation": "notEqual",
+              "value2": "NONE"
+            }
+          ]
+        }
+      },
+      "name": "Trade Validation",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://fapi.binance.com/fapi/v1/order",
+        "method": "POST",
+        "sendBody": true,
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={\n  \"symbol\": $json.symbol,\n  \"side\": $json.action === 'LONG' ? 'BUY' : 'SELL',\n  \"type\": \"MARKET\",\n  \"quantity\": 0.01\n}"
+      },
+      "name": "Execute Trade",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_CHAT_ID",
+        "text": "=🚀 Trade Executed\\n\\nSymbol: {{$json.symbol}}\\nAction: {{$json.action}}\\nRSI: {{$json.rsi}}\\nATR: {{$json.atr}}"
+      },
+      "name": "Telegram Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1300, 300]
+    }
+  ],
+  "connections": {
+    "TradingView Webhook": {
+      "main": [
+        [
+          {
+            "node": "Logic Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Logic Engine": {
+      "main": [
+        [
+          {
+            "node": "Trade Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trade Validation": {
+      "main": [
+        [
+          {
+            "node": "Execute Trade",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Trade": {
+      "main": [
+        [
+          {
+            "node": "Telegram Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
