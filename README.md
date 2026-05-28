@@ -69,6 +69,12 @@ If the bullish or bearish conditions are aligned, the workflow returns `LONG` or
 - `image.png` - workflow overview visual
 - `README.md` - project documentation
 - `LICENSE` - MIT license
+- `CONTRIBUTING.md` - contribution guide
+- `CODE_OF_CONDUCT.md` - community standards
+- `SECURITY.md` - security reporting guidance
+- `SUPPORT.md` - support and usage notes
+- `CHANGELOG.md` - project history
+- `.github/` - issue and pull request templates
 
 ## Important note
 
